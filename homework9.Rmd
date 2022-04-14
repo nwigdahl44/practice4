@@ -1,1 +1,38 @@
 # Author: Nathaniel Wigdahl
+```{r}
+ library(tidyverse)
+```
+ 
+# Import data set for Avengers
+```{r}
+av <- read.csv("https://raw.githubusercontent.com/fivethirtyeight/data/master/avengers/avengers.csv", stringsAsFactors = FALSE)
+```
+
+
+# Now to combine and parse the Death and Return data into something more readable
+```{r combining death columns}
+deaths <- pivot_longer(av, c('Death1', 'Death2','Death3','Death4','Death5'), names_to = 'Time', values_to = 'Death')
+deaths <-  deaths%>% mutate(Time = parse_number(Time))
+deaths <-deaths%>% group_by(URL) %>% filter(!(Death == '')) %>% summarise(Time = max(Time), Death = Death[which.max(Time)])
+```
+
+```{r combining return columns}
+returns <- pivot_longer(av, c('Return1', 'Return2','Return3','Return4','Return5'), names_to = 'Time', values_to = 'Return')
+returns <-  returns%>% mutate(Time = parse_number(Time))
+returns <-returns%>% group_by(URL) %>%   filter(!(Return == '') | (Time == 1)) %>% summarise(Return = Return[which.max(Time)], Time = max(Time))
+```
+
+# Answer a question
+#### Statement of choice: "But you can only tempt death so many times. There’s a 2-in-3 chance that a member of the Avengers returned from their first stint in the afterlife, but only a 50 percent chance they recovered from a second or third death."
+
+```{r 2-in-3}
+#total number of heroes who have ever returned from death / total number who have ever died.
+as.numeric(returns %>% filter(Return == 'YES') %>% summarise(n=n()))/ as.numeric(deaths %>% filter(Death == 'YES') %>% summarise(n=n()))
+```
+
+```{r 50% chance after first return}
+as.numeric(returns %>% filter(Time >= 2 & Return == 'YES') %>% summarise(n=n()))/ as.numeric(deaths %>% filter(Time >=2 & Death == 'YES') %>% summarise(n=n()))
+```
+
+It seems that the 2-3 chance of return is not quite true. Most likely, they were not including heroes who died more than once.
+The 50% chance of returning a second or third time seems to be rounded up from the more accurate 40%.
