@@ -1,7 +1,7 @@
 ---
 title: "homework10"
 author: "Nathaniel Wigdahl"
-github repo: 
+github repo: https://github.com/nwigdahl44/practice4/tree/main/Homework%2010
 date: "4/20/2022"
 output: html_document
 ---
