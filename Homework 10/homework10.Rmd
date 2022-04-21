@@ -1,0 +1,85 @@
+---
+title: "homework10"
+author: "Nathaniel Wigdahl"
+github repo: 
+date: "4/20/2022"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+```{r}
+library(tidyverse)
+```
+
+```{r import the data sets}
+accidents = read.csv("accident.csv")
+persons = read.csv("person.csv")
+```
+
+### Plot accidents from Latitude and Longitude
+```{r plot accident data}
+cont_accident <- accidents%>% filter(LONGITUD < 750, LATITUDE < 50, LATITUDE > 24)
+states <- map_data("state")
+states %>% ggplot(aes(x = long, y = lat)) + geom_path(aes(group = group)) + 
+  geom_point(aes(x= LONGITUD, y = LATITUDE), data = cont_accident)
+
+
+```
+
+
+## Part One
+#### Are there some days of the week where more accidents happen than on others (use variable DAY_WEEK)?
+```{r Accidents by day}
+accidents %>% group_by(DAY_WEEK) %>% summarise(total_acc = n())
+temp_graph <- accidents %>% group_by(DAY_WEEK) %>% summarise(total_acc = n()) %>% 
+  mutate(DAY_WEEK = as.factor(DAY_WEEK))
+temp_graph %>% ggplot(aes(x = DAY_WEEK, y = total_acc, fill=DAY_WEEK)) + geom_col()
+```
+
+From this basic histogram we can conclude that accidents tend to happen on and around the weekend, with the lowest rates in the middle of the week.
+    
+#### What time of the day do accidents happen (use variable HOUR)?
+```{r}
+accidents %>% filter(HOUR != 99) %>% group_by(HOUR) %>% summarise(total_acc = n()) %>%  ggplot(aes(x = HOUR, y = total_acc)) + geom_col()
+```
+
+The primary time range accidents occur is from 3-11 pm, early evening early night.
+
+#### What is the number of accidents with at least one drunk driver (use variable DRUNK_DR)?
+```{r}
+accidents %>% filter(DRUNK_DR > 0) %>% summarise(n = n())
+```
+
+There were 8720 accidents with at least one drunk driver.
+
+## Part Two
+
+#### Connect to the person table. Identify drivers (PER_TYP == 1, see fars manual ) and subset on them.\
+```{r}
+ drivers <-  persons %>% filter(PER_TYP == 1) #We only want the drivers. 
+ drivers <- drivers %>% select(ST_CASE, HOUR, SEX)  # Select pertinent data for the upcoming join
+ drivers <- drivers %>% filter(SEX == 1 | SEX == 2) %>% filter(HOUR != 99)
+```  
+#### Join accident and driver table (work out which variable(s) to use)
+```{r}
+ acc_sub <- accidents %>% select(ST_CASE, DAY_WEEK)  #Select columns we want in our joined table
+
+acc_driver <- left_join(drivers, acc_sub, by = "ST_CASE")
+```
+    
+#### Tally the number of accidents by day of the week (DAY_WEEK), hour of the day (HOUR) and gender (SEX). Visualize the results!
+```{r}
+#Tally the numbers
+graph1 <- acc_driver %>% group_by(DAY_WEEK, SEX) %>% summarise(n = n())
+graph2 <- acc_driver %>% group_by(HOUR, SEX) %>% summarise(n = n())
+
+#Visualize results.
+graph1 %>% spread(key = SEX, value = n) %>% 
+  ggplot() + geom_col(aes(x = DAY_WEEK, y = `1`, fill = 'Men')) + geom_col(aes(x = DAY_WEEK, y = `2`, fill = 'Women'))
+
+graph2 %>% spread(key = SEX, value = n) %>% 
+  ggplot() + geom_col(aes(x = HOUR, y = `1`, fill = 'Men')) + geom_col(aes(x = HOUR, y = `2`, fill = 'Women'))
+```
+
