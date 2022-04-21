@@ -83,3 +83,5 @@ graph2 %>% spread(key = SEX, value = n) %>%
   ggplot() + geom_col(aes(x = HOUR, y = `1`, fill = 'Men')) + geom_col(aes(x = HOUR, y = `2`, fill = 'Women'))
 ```
 
+### Github repo: https://github.com/nwigdahl44/practice4/tree/main/Homework%2010
+
